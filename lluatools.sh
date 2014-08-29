@@ -73,7 +73,25 @@ function logsort(){
 }
 
 # BEGIN FUNCTION - Check error logs for mod_fcgid errors
+function fcgierror(){
+	#get the largest error_log
+	errlog=$(find /var/www/vhosts/ -maxdepth 4 -type f -name error_log | xargs -rn1 du -h | sort -nr -k1 | head -1 | awk -F" " {'print $2'});
+	logfilenum1=$(grep "mod_fcgid: can't apply process slot for" $errlog | wc -l);
+	for i in {1..10}
+	do
+	clear;
+	printf "\nThere are $(grep "mod_fcgid: can't apply process slot for" $errlog | wc -l) instances of \"mod_fcgid: can\'t apply process slot\" in $errlog\n\n";
+	sleep 1;
+	done
+	printf "\nLargest error log: $(du -h $errlog)\n\n";
+	logfilenum2=$(grep "mod_fcgid: can't apply process slot for" $errlog | wc -l);
+	printf "In the last ten seconds, \"mod_fcgid: can't apply process slot for\" has occurred $(($logfilenum2-$logfilenum1)) time(s).\n\n";
+	printf "The Following IP addresses have triggered this error:\n\n";
+	printf " # | IP Address\n-------------------\n";
+	grep "mod_fcgid: can't apply process slot for" $errlog | cut -d " " -f 8 | sed -s 's/]//' | sort -n | uniq -c | sort -nr | head -15 | column -t
+	printf "\nHere are you current fcgid.conf settings:\n\n $(grep Fcgid /etc/httpd/conf.d/fcgid.conf | column -t)\n\n";
 
+}
 
 # BEGIN FUNCTION - Test PHP memory limit
 
@@ -88,5 +106,4 @@ function repolist(){
 	yum repolist enabled | grep -A15 "repo id"
 }
 
-
-rmssl
+fcgierror
