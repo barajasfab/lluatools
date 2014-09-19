@@ -99,11 +99,57 @@ function fcgierror(){
 # BEGIN FUNCTION - Check for DDoS attack
 
 
-# BEGIN FUNCTION - check enabled repo lists
+# BEGIN FUNCTION - Check database listing and the subsription it is tied to
+function dbListing(){
+	mysql -u admin -p$(cat /etc/psa/.psa.shadow) psa -e "select domains.name as Domain, data_bases.name as DB from domains, data_bases where data_bases.dom_id=domains.id order by domains.name;"
+}
+
+# BEGIN FUNCTION - 
+function domList(){
+	awk -F'=' '/^DNS/ {print $2}' /var/cpanel/users/*
+}
+
+# BEGIN FUNCTION - Check enabled repo lists
 function repolist(){
 	clear;
 	#Output the enabled repos
 	yum repolist enabled | grep -A15 "repo id"
 }
 
-fcgierror
+# BEGIN FUNCTION - See which log files are being access the most using lsof
+function activeLogs(){
+	# count how many processes have an access log open
+	ps -C httpd | grep [:digit:] | head -1 | cut -d " " -f1 | lsof -i4 -c httpd | grep -P "(access|error)_(ssl_log)" | awk -F " " {'print $9'} | sort | uniq -c
+}
+
+
+### BEGIN GRID FUNCTIONS ###
+
+# BEGIN FUNCTION - List domain names and their live DNS
+function getGridDns(){
+	echo -ne "$(dig @8.8.8.8 +short s$(echo $HOME | awk -F/ '{ print $3 }').gridserver.com) ";
+	echo -ne "access domain:  "; 
+	echo " ${SITE}.gridserver.com";
+	echo -ne "$(dig @ns1.mediatemple.net +short $(whoami)) ";
+	echo -ne "primary domain:      "; 
+	echo $(whoami); 
+	echo ""; ls -d ~/domains/*.* | awk -F"/" '{print $NF}' | while read DOMAIN; do DIG=$(dig +short @8.8.8.8 $DOMAIN);
+	if [ "$DIG" != "" ];
+		then echo $DIG $DOMAIN | column -t;
+		fi;
+		done
+}
+
+# BEGIN FUNCTION - 
+
+# BEGIN MENU
+cat <<- _EOF_
+What would you like to do?
+1) Get stack info
+2) Remove SSL Cert
+3) Hostname/rDNS check
+4) Sort logs by size
+5) Check for FastCGI errors
+6) 
+_EOF_
+read -p "Please enter your selection: " response;
