@@ -1,5 +1,10 @@
 #!/bin/bash
 
+##################################################
+##########  BEGIN Plesk DV Functions #############
+##################################################
+
+
 # BEGIN FUNCTION - Check overall server status
 function getversions(){
 	clear; 
@@ -104,6 +109,25 @@ function dbListing(){
 	mysql -u admin -p$(cat /etc/psa/.psa.shadow) psa -e "select domains.name as Domain, data_bases.name as DB from domains, data_bases where data_bases.dom_id=domains.id order by domains.name;"
 }
 
+# BEGIN FUNCTION - See which log files are being access the most using lsof
+function activeLogs(){
+	# count how many processes have an access log open
+	ps -C httpd | grep [:digit:] | head -1 | cut -d " " -f1 | lsof -i4 -c httpd | grep -P "(access|error)_(ssl_log)" | awk -F " " {'print $9'} | sort | uniq -c
+}
+
+
+##################################################
+###########  END Plesk DV Functions ##############
+##################################################
+
+
+
+
+#CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC#
+#########   BEGIN cPanel DV Functions  ###########
+#CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC#
+
+
 # BEGIN FUNCTION - 
 function domList(){
 	awk -F'=' '/^DNS/ {print $2}' /var/cpanel/users/*
@@ -116,14 +140,17 @@ function repolist(){
 	yum repolist enabled | grep -A15 "repo id"
 }
 
-# BEGIN FUNCTION - See which log files are being access the most using lsof
-function activeLogs(){
-	# count how many processes have an access log open
-	ps -C httpd | grep [:digit:] | head -1 | cut -d " " -f1 | lsof -i4 -c httpd | grep -P "(access|error)_(ssl_log)" | awk -F " " {'print $9'} | sort | uniq -c
-}
+
+#CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC#
+#########  END cPanel DV Functions  ##############
+#CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC#
 
 
-### BEGIN GRID FUNCTIONS ###
+
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>#
+###########    BEGIN GRID FUNCTIONS    ###########
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>#
+
 
 # BEGIN FUNCTION - List domain names and their live DNS
 function getGridDns(){
@@ -139,6 +166,12 @@ function getGridDns(){
 		fi;
 		done
 }
+
+
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>#
+###########     END GRID FUNCTIONS     ###########
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>#
+
 
 # BEGIN FUNCTION - 
 
